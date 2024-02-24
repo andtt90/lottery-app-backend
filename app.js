@@ -9,8 +9,10 @@ app.get('/', (req, res) => {
     res.send({test: 'test'});
 })
 
+app.post('/sendTickets', (req, res) => {
+  console.log(req.body);
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
-
-console.log('test commit');
