@@ -11,7 +11,14 @@ datasource db {
 }
 
 model Ticket {
-  id Int @id @default(autoincrement())
-  numbers String
+  id        Int   @id @default(autoincrement())
+  boxes     Box[]
   superzahl Int?
+}
+
+model Box {
+  id       Int     @id @default(autoincrement())
+  numbers  String
+  Ticket   Ticket? @relation(fields: [ticketId], references: [id])
+  ticketId Int?
 }

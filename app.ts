@@ -2,8 +2,8 @@
 import express, { Express, Request, Response } from "express";
 import cors from 'cors';
 import bodyParser from "body-parser";
-import { PrismaClient } from '@prisma/client'
-import { Ticket, DbTicket } from "./types";
+import { Prisma, PrismaClient } from '@prisma/client'
+import { Ticket, Box, DbTicket, DbBox } from "./types";
 
 // App setup
 const app: Express = express();
@@ -25,41 +25,71 @@ app.listen(port, () => {
 })
 
 // API endpoints
-app.post('/sendTickets', jsonParser, (req: Request, res: Response) => {
-  if (req.body.ticketsArray) {
-    let results: DbTicket[] = [];    
-    req.body.ticketsArray.forEach(async (ticket: Ticket, index: number) => {
-      const result: DbTicket = await prisma.ticket.create({
-        data: {
-          numbers: ticket.numbers.toString(),
-          superzahl: ticket.superzahl
-        }
-      });
-      results.push(result);
-      if (results.length === req.body.ticketsArray.length) {
-        res.json({ results });
+app.post('/sendTicket', jsonParser, async (req: Request, res: Response) => {
+  const { boxesArray, superzahl } = req.body.ticket;
+  const boxesData: DbBox = boxesArray.map((box: Prisma.BoxCreateInput) => {
+    return { numbers: box.numbers.toString() }
+  });
+
+  if (req.body.ticket) {
+    const ticket = await prisma.ticket.create({
+      data: {
+        boxes: {
+          create: boxesData
+        },
+        superzahl
       }
-    })
+    });
+    res.json({ ticket });
   }
 })
 
 app.get('/getAllTickets', async (req: Request, res: Response) => {
-  const savedTickets = await prisma.ticket.findMany();
-  const processedTickets = savedTickets.map((elem: DbTicket) => {
-    const numbers = elem.numbers.split(',').map((numberElem: string) => {
-      return parseInt(numberElem);
-    })
+  const savedTickets = await prisma.ticket.findMany({
+    include: {
+      boxes: true
+    }
+  });
+  const processedTickets = savedTickets.map((elem) => {
+    const boxes = elem.boxes.map((boxElem) => {
+      return boxElem.numbers.split(',').map(numberElem => {
+        return parseInt(numberElem);
+      });
+    });
     return {
       id: elem.id,
-      numbers,
+      boxes,
       superzahl: elem.superzahl
     }
   })
-  res.send({ savedTickets: processedTickets })
+  res.send({ savedTickets: processedTickets });
 })
 
-app.delete('/deleteTickets', async (req: Request, res: Response) => {
-  await prisma.ticket.deleteMany();
-  res.send({});
-})  
+app.get(`/ticket/:id`, async (req, res) => {
+  const { id } = req.params
+  const ticket = await prisma.ticket.findUnique({
+    where: {
+      id: Number(id),
+    },
+    include: { boxes: true }
+  })
+  const processedTicket = {
+    id: ticket?.id,
+    superzahl: ticket?.superzahl,
+    boxesArray: ticket?.boxes.map((boxElem) => {
+      return {
+        numbers:
+          boxElem.numbers.split(',').map(numberElem => {
+            return parseInt(numberElem);
+          })
+      };
+    })
+  }
+  res.json(processedTicket)
+})
+
+// app.delete('/deleteTickets', async (req: Request, res: Response) => {
+//   await prisma.ticket.deleteMany();
+//   res.send({});
+// })
 

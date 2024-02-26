@@ -1,10 +1,21 @@
 export interface Ticket {
-    numbers: number[];
+    boxesArray: Box[];
     superzahl?: number
   }
   
 export interface DbTicket {
     id: number;
-    numbers: string;
+    boxes: Box[];
     superzahl?: number | null;
   }
+
+export interface Box {
+  numbers: [];
+}
+
+export interface DbBox {
+  id: number;
+  numbers: string;
+  ticket: DbTicket;
+  ticketId: number;
+}
