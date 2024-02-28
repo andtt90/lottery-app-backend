@@ -88,8 +88,8 @@ app.get(`/ticket/:id`, async (req, res) => {
   res.json(processedTicket)
 })
 
-// app.delete('/deleteTickets', async (req: Request, res: Response) => {
-//   await prisma.ticket.deleteMany();
-//   res.send({});
-// })
+app.delete('/deleteTickets', async (req: Request, res: Response) => {
+  await prisma.ticket.deleteMany();
+  res.send({});
+})
 
